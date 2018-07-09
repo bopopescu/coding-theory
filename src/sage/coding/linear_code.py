@@ -1689,6 +1689,50 @@ class AbstractLinearCode(Module):
         G = top.stack(bottom)
         return LinearCode(G)
 
+    def juxtapose(self, other):
+	"""
+	Returns the code obtained by juxtaposing 'self' and 'other'. The two
+	codes must have equal dimension.
+
+	EXAMPLES::
+		
+	   sage: C1 = codes.HammingCode(GF(2), 3)
+	   sage: C2 = C1.juxtapose(C2), C2
+	   [14, 4] linear code over GF(2)	
+	   
+	"""   
+	G1 = self.generator_matrix()
+	G2 = other.generator_matrix()
+	G = G1.augment(G2)
+	return LinearCode(G)
+	
+    def u_u_plus_v_code(self, other):
+	"""
+	Returns the code obtained through (u|u+v) construction with 'self' as u
+	and 'other' as v.
+
+	u and v must have equal lengths. When u is a [n, k1, d1] code and v is a	[n, k2, d2] code this returns a [2n, k1+k2, d] code, where d=min(2d1,d2)
+	
+	EXAMPLES::
+	
+	    sage: C1 = codes.HammingCode(GF(2), 3)
+	    sage: C2 = codes.HammingCode(GF(2), 3)
+	    sage: C1.u_u_plus_v_code(C2)
+	    sage: [14,8] linear code over GF(2)	    
+          
+	"""
+	F = self.base_ring()
+	G1 = self.generator_matrix()
+	G2 = other.generator_matrix()
+	k2 = len(G2.rows())
+	n2 = len(G2.columns())
+	MS = MatrixSpace(F,k2,n2)
+	Z = MS(0)
+	top = G1.augment(G1)
+	bot = Z.augment(G2)
+	G = top.stack(bot)
+	return LinearCode(G)
+
     def __eq__(self, right):
         """
         Checks if ``self`` is equal to ``right``.
