@@ -1733,6 +1733,17 @@ class AbstractLinearCode(Module):
 	G = top.stack(bot)
 	return LinearCode(G)
 
+    def product_code(self, other):
+	"""
+	Combines 'self' with 'other' to give the tensor product code.
+
+	If 'self' is a [n1, k1, d1] code and 'other' is a [n2, k2, d2] code, the 	product is a [n1*n2, k1*k2, d1*d2] code.
+	"""
+	G1 = self.generator_matrix()
+	G2 = other.generator_matrix()
+	G = G1.tensor_product(G2)
+	return LinearCode(G)
+	
     def __eq__(self, right):
         """
         Checks if ``self`` is equal to ``right``.
