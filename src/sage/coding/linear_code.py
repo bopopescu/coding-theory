@@ -1661,6 +1661,7 @@ class AbstractLinearCode(Module):
 
     def direct_sum(self, other):
         """
+	
         Returns the code given by the direct sum of the codes ``self`` and
         ``other``, which must be linear codes defined over the same base ring.
 
@@ -1671,6 +1672,8 @@ class AbstractLinearCode(Module):
             [14, 8] linear code over GF(2)
             sage: C3 = C1.direct_sum(C2); C3
             [21, 12] linear code over GF(2)
+	
+	+++
         """
         C1 = self; C2 = other
         G1 = C1.generator_matrix()
@@ -1699,7 +1702,8 @@ class AbstractLinearCode(Module):
 	   sage: C1 = codes.HammingCode(GF(2), 3)
 	   sage: C2 = C1.juxtapose(C2), C2
 	   [14, 4] linear code over GF(2)	
-	   
+	
+	+++
 	"""   
 	G1 = self.generator_matrix()
 	G2 = other.generator_matrix()
@@ -1719,7 +1723,8 @@ class AbstractLinearCode(Module):
 	    sage: C2 = codes.HammingCode(GF(2), 3)
 	    sage: C1.u_u_plus_v_code(C2)
 	    sage: [14,8] linear code over GF(2)	    
-          
+        
+	+++
 	"""
 	F = self.base_ring()
 	G1 = self.generator_matrix()
@@ -1737,7 +1742,11 @@ class AbstractLinearCode(Module):
 	"""
 	Combines 'self' with 'other' to give the tensor product code.
 
-	If 'self' is a [n1, k1, d1] code and 'other' is a [n2, k2, d2] code, the 	product is a [n1*n2, k1*k2, d1*d2] code.
+	If 'self' is a [n1, k1, d1] code and 'other' is a [n2, k2, d2] code, the product is a [n1*n2, k1*k2, d1*d2] code.
+	
+	EXAMPLES::
+	
+	+++
 	"""
 	G1 = self.generator_matrix()
 	G2 = other.generator_matrix()
@@ -1745,41 +1754,42 @@ class AbstractLinearCode(Module):
 	return LinearCode(G)
 
     def construction_x(self, other, aux):
-    """
-    Returns a code obtained from construction X applied to C1='self', C2='other' and Ca='aux'.
+        """
+	    Returns a code obtained from construction X applied to C1='self', C2='other' and Ca='aux'.
 
-    'Other' must be a subcode of 'self'. If C1 is a [n, k1, d1] linear code and C2 is a [n, k2, d2]
-    linear code, then k1 > k2 and d1 < d2. Ca must be a [na, ka, da] linear code such that
-    ka + k2 == k1 and da + d1 <= d2. The method will then return a [n+na, k1, da+d1] 
-    linear code.
+	    'Other' must be a subcode of 'self'. If C1 is a [n, k1, d1] linear code and C2 is a [n, k2, d2]
+	    linear code, then k1 > k2 and d1 < d2. Ca must be a [na, ka, da] linear code such that
+	    ka + k2 == k1 and da + d1 <= d2. The method will then return a [n+na, k1, da+d1] 
+	    linear code.
 
-    EXAMPLES::
-        sage: C = codes.BCHCode(GF(2),31,8)
-        sage: C
-        [31, 11] BCH Code over GF(2) with designed distance 8
-        sage: D = codes.BCHCode(GF(2),31,7)
-        sage: D
-        [31, 16] BCH Code over GF(2) with designed distance 7
-        sage: C.is_subcode(D)
-        True
-        sage: C.minimum_distance()
-        11
-        sage: D.minimum_distance()
-        7
-        sage: aux = codes.random_linear_code(GF(2),9,5)
-        sage: aux.minimum_distance()
-        3
-        sage: Cx = D.construction_x(C,aux)
-        sage: Cx
-        [40, 16] linear code over GF(2)
-        sage: Cx.minimum_distance()
-        10
+	    EXAMPLES::
+	    
+		sage: C = codes.BCHCode(GF(2),31,8)
+		sage: C
+		[31, 11] BCH Code over GF(2) with designed distance 8
+		sage: D = codes.BCHCode(GF(2),31,7)
+		sage: D
+		[31, 16] BCH Code over GF(2) with designed distance 7
+		sage: C.is_subcode(D)
+		True
+		sage: C.minimum_distance()
+		11
+		sage: D.minimum_distance()
+		7
+		sage: aux = codes.random_linear_code(GF(2),9,5)
+		sage: aux.minimum_distance()
+		3
+		sage: Cx = D.construction_x(C,aux)
+		sage: Cx
+		[40, 16] linear code over GF(2)
+		sage: Cx.minimum_distance()
+		10
 
-
-    """
+	+++
+	"""
         if other.is_subcode(self) == False:
 	    raise ValueError("%s is not a subcode of %s"%(self,other))
-
+	
         G2 = self.generator_matrix()
         left = G1 = other.generator_matrix()
         k = self.dimension()
