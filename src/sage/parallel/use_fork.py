@@ -170,7 +170,7 @@ class p_iter_fork(object):
                     with ContainChildren():
                         pid = os.fork()
                         # The way fork works is that pid returns the
-                        # nonzero pid of the subprocess for the master
+                        # nonzero pid of the subprocess for the main
                         # process and returns 0 for the subprocess.
                         if not pid:
                             # This is the subprocess.

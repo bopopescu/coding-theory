@@ -85,7 +85,7 @@ def sphinxify(docstring, format='html'):
 smart_quotes = no
 """)
     doctreedir = os.path.join(srcdir, 'doctrees')
-    confoverrides = {'html_context': {}, 'master_doc': 'docstring'}
+    confoverrides = {'html_context': {}, 'main_doc': 'docstring'}
 
     import sys
     old_sys_path = list(sys.path)  # Sphinx modifies sys.path

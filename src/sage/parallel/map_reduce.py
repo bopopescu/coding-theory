@@ -208,7 +208,7 @@ three following parameters:
   ``SAGE_NUM_THREADS`` (the number of cores by default).
 - ``timeout`` -- a timeout on the computation (default: ``None``)
 - ``reduce_locally`` -- whether the workers should reduce locally
-  their work or sends results to the master as soon as possible.
+  their work or sends results to the main as soon as possible.
   See :class:`RESetMapReduceWorker` for details.
 
 
@@ -335,45 +335,45 @@ The scheduling algorithm we use here is any adaptation of :wikipedia:`Work_steal
 
 For communication we use Python's basic :mod:`multiprocessing` module. We
 first describe the different actors and communications tools used by the
-system. The work is done under the coordination of a **master** object (an
+system. The work is done under the coordination of a **main** object (an
 instance of :class:`RESetMapReduce`) by a bunch of **worker** objects
 (instances of :class:`RESetMapReduceWorker`).
 
 Each running map reduce instance work on a :class:`RecursivelyEnumeratedSet of
 forest type<sage.combinat.backtrack.SearchForest>` called here `C` and is
-coordinated by a :class:`RESetMapReduce` object called the **master**. The
-master is in charge of lauching the work, gathering the results and cleaning
+coordinated by a :class:`RESetMapReduce` object called the **main**. The
+main is in charge of lauching the work, gathering the results and cleaning
 up at the end of the computation. It doesn't perform any computation
 associated to the generation of the element `C` nor the computation of the
 mapped function. It however occasionally perform a reduce, but most reducing
 is by default done by the workers. Also thanks to the work-stealing algorithm,
-the master is only involved in detecting the termination of the computation
+the main is only involved in detecting the termination of the computation
 but all the load balancing is done at the level of the worker.
 
 Workers are instance of :class:`RESetMapReduceWorker`. They are responsible of
 doing the actual computations: elements generation, mapping and reducing. They
 are also responsible of the load balancing thanks to work-stealing.
 
-Here is a description of the attribute of the **master** relevant to the
+Here is a description of the attribute of the **main** relevant to the
 map-reduce protocol:
 
-- ``master._results`` -- a :class:`~multiprocessing.queues.SimpleQueue` where
-  the master gathers the results sent by the workers.
-- ``master._active_tasks`` -- a :class:`~multiprocessing.Semaphore` recording
+- ``main._results`` -- a :class:`~multiprocessing.queues.SimpleQueue` where
+  the main gathers the results sent by the workers.
+- ``main._active_tasks`` -- a :class:`~multiprocessing.Semaphore` recording
   the number of active task.  The work is done when it gets to 0.
-- ``master._done`` -- a :class:`~multiprocessing.Lock` which ensures that
+- ``main._done`` -- a :class:`~multiprocessing.Lock` which ensures that
   shutdown is done only once.
-- ``master._aborted`` -- a :func:`~multiprocessing.Value` storing a shared
+- ``main._aborted`` -- a :func:`~multiprocessing.Value` storing a shared
   :class:`ctypes.c_bool` which is ``True`` if the computation was aborted before
   all the workers ran out of work.
-- ``master._workers`` -- a list of :class:`RESetMapReduceWorker` objects. Each worker is
+- ``main._workers`` -- a list of :class:`RESetMapReduceWorker` objects. Each worker is
   identified by its position in this list.
 
 Each worker is a process (:class:`RESetMapReduceWorker` inherits from
 :class:`~multiprocessing.Process`) which contains:
 
 - ``worker._iproc`` -- the identifier of the worker that is its position in the
-  master's list of workers
+  main's list of workers
 - ``worker._todo`` -- a :class:`collections.deque` storing of nodes of the
   worker. It is used as a stack by the worker. Thiefs steal from the bottom of
   this queue.
@@ -404,7 +404,7 @@ some work (ie: a node) from another worker. This is performed in the
 
 From the point of view of ``W`` here is what happens:
 
-- ``W`` signals to the master that it is idle :meth:`master._signal_task_done`;
+- ``W`` signals to the main that it is idle :meth:`main._signal_task_done`;
 - ``W`` chooses a victim ``V`` at random;
 - ``W`` sends a request to ``V`` : it puts its identifier into ``V._request``;
 - ``W`` tries to read a node from ``W._read_task``. Then three things may happen:
@@ -426,19 +426,19 @@ From the point of view of ``V`` and ``T``, here is what happens:
 
 - during normal time ``T`` is blocked waiting on ``V._request``;
 - upon steal request, ``T`` wakes up receiving the identification of ``W``;
-- ``T`` signal to the master that a new task is starting by
-  :meth:`master._signal_task_start`;
+- ``T`` signal to the main that a new task is starting by
+  :meth:`main._signal_task_start`;
 - Two things may happen depending if the queue ``V._todo`` is empty or not.
   Remark that due to the GIL, there is no parallel execution between the
   victim ``V`` and its thief tread ``T``.
 
   + If ``V._todo`` is empty, then ``None`` is answered on
-    ``W._write_task``. The task is immediately signaled to end the master
-    through :meth:`master._signal_task_done`.
+    ``W._write_task``. The task is immediately signaled to end the main
+    through :meth:`main._signal_task_done`.
   + Otherwise, a node is removed from the bottom of ``V._todo``. The node is
     sent to ``W`` on ``W._write_task``. The task will be ended by ``W``, that
     is when finished working on the subtree rooted at the node, ``W`` will
-    call :meth:`master._signal_task_done`.
+    call :meth:`main._signal_task_done`.
 
 The end of the computation
 --------------------------
@@ -450,17 +450,17 @@ are broken on Darwin's OSes so we ship two implementations depending on the os
 below).
 
 When a worker finishes working on a task, it calls
-:meth:`master._signal_task_done`. This decrease the task counter
-``master._active_tasks``. When it reaches 0, it means that there are no more
-nodes: the work is done. The worker executes :meth:`master._shutdown` which
+:meth:`main._signal_task_done`. This decrease the task counter
+``main._active_tasks``. When it reaches 0, it means that there are no more
+nodes: the work is done. The worker executes :meth:`main._shutdown` which
 sends ``AbortError`` on all :meth:`worker._request` and
 :meth:`worker._write_task` Queues. Each worker or thief thread receiving such
 a message raise the corresponding exception, stopping therefore its work. A
-lock called ``master._done`` ensures that shutdown is only done once.
+lock called ``main._done`` ensures that shutdown is only done once.
 
 Finally, it is also possible to interrupt the computation before its ends
-calling :meth:`master.abort()`. This is done by putting
-``master._active_tasks`` to 0 and calling :meth:`master._shutdown`.
+calling :meth:`main.abort()`. This is done by putting
+``main._active_tasks`` to 0 and calling :meth:`main._shutdown`.
 
 .. warning:: The MacOSX Semaphore bug
 
@@ -1054,7 +1054,7 @@ class RESetMapReduce(object):
           worker processes.
 
         - ``reduce_locally`` -- whether the workers should reduce locally
-          their work or sends results to the master as soon as possible.
+          their work or sends results to the main as soon as possible.
           See :class:`RESetMapReduceWorker` for details.
 
         TESTS::
@@ -1736,8 +1736,8 @@ class RESetMapReduceWorker(Process):
         r"""
         Send results to the MapReduce process
 
-        Send the result stored in ``self._res`` to the master an reinitialize it to
-        ``master.reduce_init``.
+        Send the result stored in ``self._res`` to the main an reinitialize it to
+        ``main.reduce_init``.
 
         EXAMPLES::
 

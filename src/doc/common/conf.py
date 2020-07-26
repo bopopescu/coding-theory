@@ -56,8 +56,8 @@ templates_path = [os.path.join(SAGE_DOC_SRC, 'common', 'templates'), 'templates'
 # The suffix of source filenames.
 source_suffix = '.rst'
 
-# The master toctree document.
-master_doc = 'index'
+# The main toctree document.
+main_doc = 'index'
 
 # General information about the project.
 project = u""
@@ -136,7 +136,7 @@ def set_intersphinx_mappings(app):
 
     app.config.intersphinx_mapping = intersphinx_mapping
 
-    # Add master intersphinx mapping
+    # Add main intersphinx mapping
     dst = os.path.join(invpath, 'objects.inv')
     app.config.intersphinx_mapping['sagemath'] = (refpath, dst)
 
@@ -165,8 +165,8 @@ extlinks = {
     'mathscinet': ('https://www.ams.org/mathscinet-getitem?mr=%s', 'MathSciNet ')
     }
 
-# By default document are not master.
-multidocs_is_master = True
+# By default document are not main.
+multidocs_is_main = True
 
 # Options for HTML output
 # -----------------------
